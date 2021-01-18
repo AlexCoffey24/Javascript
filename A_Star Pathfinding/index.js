@@ -19,6 +19,7 @@ var end_set = false;
 var starting_cell;
 var ending_cell;
 var solving = false;
+var algo = "A*";
 
 canvas.addEventListener("mousedown", (m) => {
   drawing = true;
@@ -58,7 +59,7 @@ document.getElementById("end").addEventListener("click", () => {
   cell_changer = "end";
 });
 
-document.getElementById("solve").addEventListener("click", a_star);
+document.getElementById("solve").addEventListener("click", algorithm);
 
 class Cell {
   constructor(row, col) {
@@ -248,7 +249,8 @@ draw_grid();
 
 // A* algorithm
 
-function a_star() {
+var open_set;
+function algorithm() {
   // Update all cell neighbors
   for (i = 0; i < num_of_rows; i++) {
     for (j = 0; j < num_of_cols; j++) {
@@ -257,13 +259,19 @@ function a_star() {
     }
   }
 
-  let open_set = [];
-  open_set.push(starting_cell);
-  starting_cell.g = 0;
-  starting_cell.update_h();
-  starting_cell.update_f();
+  if ((algo = "A*")) {
+    open_set = [];
+    open_set.push(starting_cell);
+    starting_cell.g = 0;
+    starting_cell.update_h();
+    starting_cell.update_f();
 
-  while (open_set.length > 0) {
+    a_star();
+  }
+}
+
+function a_star() {
+  if (open_set.length > 0) {
     let open_set_index = 0;
     for (let i = 0; i < open_set.length; i++) {
       if (open_set[i].f < open_set[open_set_index].f) {
@@ -299,9 +307,13 @@ function a_star() {
       current.make_closed();
       current.draw();
     }
-  }
 
-  console.log("no path available");
+    setTimeout(() => {
+      a_star();
+    }, 50);
+  } else {
+    console.log("no path available");
+  }
 }
 
 function remove_from_array(array, element) {
