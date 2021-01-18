@@ -6,7 +6,7 @@ canvas.width = innerWidth;
 
 var grid;
 var grid_color = "rgb(0, 0, 0)";
-var cell_size = 20;
+var cell_size = 25;
 var cell_gap = 2;
 var num_of_rows = Math.floor(canvas.height / (cell_size + cell_gap));
 var num_of_cols = Math.floor(canvas.width / (cell_size + cell_gap) - 1);
@@ -17,6 +17,8 @@ var drawing = false;
 var start_set = false;
 var end_set = false;
 var starting_cell;
+var ending_cell;
+var solving = false;
 
 canvas.addEventListener("mousedown", (m) => {
   drawing = true;
@@ -56,6 +58,8 @@ document.getElementById("end").addEventListener("click", () => {
   cell_changer = "end";
 });
 
+document.getElementById("solve").addEventListener("click", a_star);
+
 class Cell {
   constructor(row, col) {
     this.row = row;
@@ -66,6 +70,10 @@ class Cell {
     this.neighbors = [];
     this.width = cell_size;
     this.height = cell_size;
+    this.f = Infinity;
+    this.g = Infinity;
+    this.h = Infinity;
+    this.previous = undefined;
   }
 
   get_pos() {
@@ -120,15 +128,15 @@ class Cell {
     this.color = "purple";
   }
 
-  update_neighbors(grid) {
+  update_neighbors() {
     this.neighbors = [];
     // Check Up
     if (this.row > 0 && !grid[this.row - 1][this.col].is_barrier()) {
       this.neighbors.push(grid[this.row - 1][this.col]);
     }
-    // Check down
+    // Check Down
     if (
-      this.row < this.num_of_rows - 1 &&
+      this.row < num_of_rows - 1 &&
       !grid[this.row + 1][this.col].is_barrier()
     ) {
       this.neighbors.push(grid[this.row + 1][this.col]);
@@ -139,7 +147,7 @@ class Cell {
     }
     // Check Right
     if (
-      this.col < this.num_of_cols - 1 &&
+      this.col < num_of_cols - 1 &&
       !grid[this.row][this.col + 1].is_barrier()
     ) {
       this.neighbors.push(grid[this.row][this.col + 1]);
@@ -151,6 +159,16 @@ class Cell {
     c.fillStyle = this.color;
     c.fillRect(this.x, this.y, this.width, this.height);
     c.closePath;
+  }
+
+  update_h() {
+    this.h =
+      Math.abs(this.col - ending_cell.col) +
+      Math.abs(this.row - ending_cell.row);
+  }
+
+  update_f() {
+    this.f = this.g + this.h;
   }
 }
 
@@ -175,29 +193,42 @@ function draw_grid() {
 }
 
 function change_cell(x, y) {
-  row = Math.floor(y / (cell_size + cell_gap));
-  col = Math.floor(x / (cell_size + cell_gap));
-  if (cell_changer == "reset") {
-    if (grid[row][col].is_start()) {
-      start_set = false;
-    } else if (grid[row][col].is_end()) {
-      end_set = false;
-    }
-    grid[row][col].reset();
-  } else if (cell_changer == "barrier") {
-    grid[row][col].make_barrier();
-  } else if (cell_changer == "start") {
-    if (!start_set) {
-      grid[row][col].make_start();
-      starting_cell = grid[row][col];
-      start_set = true;
-    }
-  } else if (cell_changer == "end") {
-    if (!end_set) {
-      grid[row][col].make_end();
-      end_set = true;
+  if (!solving) {
+    row = Math.floor(y / (cell_size + cell_gap));
+    col = Math.floor(x / (cell_size + cell_gap));
+    if (cell_changer == "reset") {
+      if (grid[row][col].is_start()) {
+        start_set = false;
+        starting_cell = null;
+      } else if (grid[row][col].is_end()) {
+        end_set = false;
+        ending_cell = null;
+      }
+      grid[row][col].reset();
+    } else if (cell_changer == "barrier") {
+      if (grid[row][col].is_start()) {
+        start_set = false;
+        starting_cell = null;
+      } else if (grid[row][col].is_end()) {
+        end_set = false;
+        ending_cell = null;
+      }
+      grid[row][col].make_barrier();
+    } else if (cell_changer == "start") {
+      if (!start_set) {
+        grid[row][col].make_start();
+        starting_cell = grid[row][col];
+        start_set = true;
+      }
+    } else if (cell_changer == "end") {
+      if (!end_set) {
+        grid[row][col].make_end();
+        ending_cell = grid[row][col];
+        end_set = true;
+      }
     }
   }
+
   draw_grid();
 }
 
@@ -207,6 +238,7 @@ function clear_grid() {
   start_set = false;
   end_set = false;
   starting_cell = null;
+  solving = false;
 }
 
 c.fillStyle = "black";
@@ -216,14 +248,77 @@ draw_grid();
 
 // A* algorithm
 
-var open_set = [];
-var closed_set = [];
+function a_star() {
+  // Update all cell neighbors
+  for (i = 0; i < num_of_rows; i++) {
+    for (j = 0; j < num_of_cols; j++) {
+      let cell = grid[i][j];
+      cell.update_neighbors();
+    }
+  }
 
-function h(p1, p2) {
-  // No tuples in JS
-  // x1, y1 = p1
-  // x2, y2 = p2
+  let open_set = [];
+  open_set.push(starting_cell);
+  starting_cell.g = 0;
+  starting_cell.update_h();
+  starting_cell.update_f();
+
+  while (open_set.length > 0) {
+    let open_set_index = 0;
+    for (let i = 0; i < open_set.length; i++) {
+      if (open_set[i].f < open_set[open_set_index].f) {
+        open_set_index = i;
+      }
+    }
+    let current = open_set[open_set_index];
+
+    if (current === ending_cell) {
+      return reconstruct_path();
+    }
+
+    remove_from_array(open_set, current);
+
+    for (let i = 0; i < current.neighbors.length; i++) {
+      let neighbor = current.neighbors[i];
+      let temp_g = current.g + 1;
+
+      if (temp_g < neighbor.g) {
+        neighbor.previous = current;
+        neighbor.g = temp_g;
+        neighbor.update_h();
+        neighbor.update_f();
+        if (!open_set.includes(neighbor)) {
+          open_set.push(neighbor);
+          neighbor.make_open();
+          neighbor.draw();
+        }
+      }
+    }
+
+    if (current != starting_cell) {
+      current.make_closed();
+      current.draw();
+    }
+  }
+
+  console.log("no path available");
 }
 
-function reconstruct_path() {}
-function aStar() {}
+function remove_from_array(array, element) {
+  for (let i = array.length - 1; i >= 0; i--) {
+    if (array[i] == element) {
+      array.splice(i, 1);
+    }
+  }
+}
+
+function reconstruct_path() {
+  let temp = ending_cell;
+  while (temp.previous) {
+    temp.make_path();
+    temp.draw();
+    temp = temp.previous;
+  }
+  ending_cell.make_end();
+  ending_cell.draw();
+}
