@@ -1,15 +1,17 @@
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
-
-canvas.height = innerHeight;
-canvas.width = innerWidth;
+var canvas_container = document.getElementById("canvas-container");
 
 var grid;
 var grid_color = "rgb(0, 0, 0)";
 var cell_size = 25;
 var cell_gap = 2;
-var num_of_rows = Math.floor(canvas.height / (cell_size + cell_gap));
-var num_of_cols = Math.floor(canvas.width / (cell_size + cell_gap) - 1);
+var num_of_rows = Math.floor(
+  canvas_container.offsetHeight / (cell_size + cell_gap)
+);
+var num_of_cols = Math.floor(
+  canvas_container.offsetWidth / (cell_size + cell_gap) - 1
+);
 var mouse_x;
 var mouse_y;
 var cell_changer = "barrier";
@@ -20,6 +22,9 @@ var starting_cell;
 var ending_cell;
 var solving = false;
 var algo = "A*";
+
+canvas.height = num_of_rows * (cell_size + cell_gap) - cell_gap;
+canvas.width = num_of_cols * (cell_size + cell_gap) - cell_gap;
 
 canvas.addEventListener("mousedown", (m) => {
   drawing = true;
@@ -60,6 +65,8 @@ document.getElementById("end").addEventListener("click", () => {
 });
 
 document.getElementById("solve").addEventListener("click", algorithm);
+
+document.getElementById("clear").addEventListener("click", clear_grid);
 
 class Cell {
   constructor(row, col) {
@@ -240,6 +247,7 @@ function clear_grid() {
   end_set = false;
   starting_cell = null;
   solving = false;
+  cell_changer = "barrier";
 }
 
 c.fillStyle = "black";
@@ -281,6 +289,7 @@ function a_star() {
     let current = open_set[open_set_index];
 
     if (current === ending_cell) {
+      solving = false;
       return reconstruct_path();
     }
 
@@ -313,6 +322,7 @@ function a_star() {
     }, 50);
   } else {
     console.log("no path available");
+    solving = false;
   }
 }
 
