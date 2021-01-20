@@ -6,12 +6,13 @@ var grid;
 var grid_color = "rgb(0, 0, 0)";
 var cell_size = 25;
 var cell_gap = 2;
-var num_of_rows = Math.floor(
-  canvas_container.offsetHeight / (cell_size + cell_gap)
-);
+// var num_of_rows = Math.floor(
+//   canvas_container.offsetHeight / (cell_size + cell_gap)
+// );
 var num_of_cols = Math.floor(
   canvas_container.offsetWidth / (cell_size + cell_gap) - 1
 );
+var num_of_rows = num_of_cols;
 var mouse_x;
 var mouse_y;
 var cell_changer = "barrier";
@@ -21,11 +22,12 @@ var end_set = false;
 var starting_cell;
 var ending_cell;
 var solving = false;
-var algo = "A*";
+var algo;
 
 canvas.height = num_of_rows * (cell_size + cell_gap) - cell_gap;
 canvas.width = num_of_cols * (cell_size + cell_gap) - cell_gap;
 
+// Drawing event listeners
 canvas.addEventListener("mousedown", (m) => {
   drawing = true;
 });
@@ -48,6 +50,7 @@ canvas.addEventListener("click", (m) => {
   change_cell(mouse_x, mouse_y);
 });
 
+// Misc. Buttons
 document.getElementById("reset_cell").addEventListener("click", () => {
   cell_changer = "reset";
 });
@@ -68,6 +71,49 @@ document.getElementById("solve").addEventListener("click", algorithm);
 
 document.getElementById("clear").addEventListener("click", clear_grid);
 
+/* When the user clicks on the button, 
+toggle between hiding and showing the dropdown content */
+document.getElementById("algos").addEventListener("click", show_algos);
+
+function show_algos() {
+  document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function (event) {
+  if (!event.target.matches(".dropbtn")) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains("show")) {
+        openDropdown.classList.remove("show");
+      }
+    }
+  }
+};
+
+// Dropdown Buttons
+document.getElementById("A*").addEventListener("click", change_to_AStar);
+function change_to_AStar() {
+  document.getElementById("algos").textContent = "A*";
+  algo = "A*";
+}
+
+document.getElementById("BFS").addEventListener("click", change_to_BFS);
+function change_to_BFS() {
+  document.getElementById("algos").textContent = "Breadth First Search";
+  algo = "BFS";
+}
+
+document
+  .getElementById("Dijkstra")
+  .addEventListener("click", change_to_Dijkstra);
+function change_to_Dijkstra() {
+  document.getElementById("algos").textContent = "Dijkstra's";
+  algo = "Dijkstra";
+}
+
 class Cell {
   constructor(row, col) {
     this.row = row;
@@ -82,13 +128,14 @@ class Cell {
     this.g = Infinity;
     this.h = Infinity;
     this.previous = undefined;
+    this.discovered = false;
   }
 
   get_pos() {
     return this.row, this.col;
   }
 
-  is_closed() {
+  was_visited() {
     return this.color == "red";
   }
 
@@ -116,7 +163,7 @@ class Cell {
     this.color = "orange";
   }
 
-  make_closed() {
+  make_visited() {
     this.color = "red";
   }
 
@@ -142,6 +189,13 @@ class Cell {
     if (this.row > 0 && !grid[this.row - 1][this.col].is_barrier()) {
       this.neighbors.push(grid[this.row - 1][this.col]);
     }
+    // Check Right
+    if (
+      this.col < num_of_cols - 1 &&
+      !grid[this.row][this.col + 1].is_barrier()
+    ) {
+      this.neighbors.push(grid[this.row][this.col + 1]);
+    }
     // Check Down
     if (
       this.row < num_of_rows - 1 &&
@@ -152,13 +206,6 @@ class Cell {
     // Check Left
     if (this.col > 0 && !grid[this.row][this.col - 1].is_barrier()) {
       this.neighbors.push(grid[this.row][this.col - 1]);
-    }
-    // Check Right
-    if (
-      this.col < num_of_cols - 1 &&
-      !grid[this.row][this.col + 1].is_barrier()
-    ) {
-      this.neighbors.push(grid[this.row][this.col + 1]);
     }
   }
 
@@ -241,13 +288,15 @@ function change_cell(x, y) {
 }
 
 function clear_grid() {
-  make_grid();
-  draw_grid();
-  start_set = false;
-  end_set = false;
-  starting_cell = null;
-  solving = false;
-  cell_changer = "barrier";
+  if (!solving) {
+    make_grid();
+    draw_grid();
+    start_set = false;
+    end_set = false;
+    starting_cell = null;
+    solving = false;
+    cell_changer = "barrier";
+  }
 }
 
 c.fillStyle = "black";
@@ -267,7 +316,8 @@ function algorithm() {
     }
   }
 
-  if ((algo = "A*")) {
+  if (algo == "A*") {
+    solving = true;
     open_set = [];
     open_set.push(starting_cell);
     starting_cell.g = 0;
@@ -275,6 +325,16 @@ function algorithm() {
     starting_cell.update_f();
 
     a_star();
+  } else if (algo == "BFS") {
+    solving = true;
+    open_set = [];
+    open_set.push(starting_cell);
+    bfs();
+  } else if (algo == "Dijkstra") {
+    solving = true;
+    dijkstra();
+  } else {
+    console.error("no algo selected");
   }
 }
 
@@ -290,7 +350,7 @@ function a_star() {
 
     if (current === ending_cell) {
       solving = false;
-      return reconstruct_path();
+      return reconstruct_path(ending_cell);
     }
 
     remove_from_array(open_set, current);
@@ -313,7 +373,7 @@ function a_star() {
     }
 
     if (current != starting_cell) {
-      current.make_closed();
+      current.make_visited();
       current.draw();
     }
 
@@ -334,13 +394,50 @@ function remove_from_array(array, element) {
   }
 }
 
-function reconstruct_path() {
-  let temp = ending_cell;
-  while (temp.previous) {
+function bfs() {
+  if (open_set.length > 0) {
+    let current = open_set.shift();
+    current.make_visited();
+    current.draw();
+    for (i = 0; i < current.neighbors.length; i++) {
+      let neighbor = current.neighbors[i];
+      if (!neighbor.was_visited()) {
+        neighbor.previous = current;
+        if (neighbor == ending_cell) {
+          solving = false;
+          return reconstruct_path(ending_cell);
+        }
+        neighbor.make_open();
+        neighbor.draw();
+
+        let temp_set = new Set(open_set);
+        temp_set.add(neighbor);
+        open_set = [...temp_set];
+      }
+    }
+
+    setTimeout(() => {
+      bfs();
+    }, 50);
+  } else {
+    console.log("no path available");
+    solving = false;
+  }
+}
+
+function dijkstra() {}
+
+function reconstruct_path(temp) {
+  if (temp.previous) {
     temp.make_path();
     temp.draw();
-    temp = temp.previous;
+
+    setTimeout(() => {
+      reconstruct_path(temp.previous);
+    }, 50);
   }
   ending_cell.make_end();
   ending_cell.draw();
+  starting_cell.make_start();
+  starting_cell.draw();
 }
