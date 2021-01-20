@@ -51,20 +51,38 @@ canvas.addEventListener("click", (m) => {
 });
 
 // Misc. Buttons
-document.getElementById("reset_cell").addEventListener("click", () => {
-  cell_changer = "reset";
-});
-
-document.getElementById("barrier").addEventListener("click", () => {
-  cell_changer = "barrier";
-});
-
 document.getElementById("start").addEventListener("click", () => {
   cell_changer = "start";
 });
 
 document.getElementById("end").addEventListener("click", () => {
   cell_changer = "end";
+});
+
+document.getElementById("barrier").addEventListener("click", () => {
+  cell_changer = "barrier";
+});
+
+document
+  .getElementById("random-barriers")
+  .addEventListener("click", throw_barriers);
+
+function throw_barriers() {
+  for (i = 0; i < num_of_rows; i++) {
+    for (j = 0; j < num_of_cols; j++) {
+      let current = grid[i][j];
+      if (current.is_empty()) {
+        if (Math.random() > 0.7) {
+          current.make_barrier();
+          current.draw();
+        }
+      }
+    }
+  }
+}
+
+document.getElementById("reset_cell").addEventListener("click", () => {
+  cell_changer = "reset";
 });
 
 document.getElementById("solve").addEventListener("click", algorithm);
@@ -153,6 +171,10 @@ class Cell {
 
   is_end() {
     return this.color == "blue";
+  }
+
+  is_empty() {
+    return this.color == "white";
   }
 
   reset() {

@@ -38,6 +38,7 @@ button:focus {
   position: relative;
   display: inline-block;
   margin-left: 50px;
+  margin-right: 5px;
 }
 
 .dropdown-content {
