@@ -332,6 +332,9 @@ function algorithm() {
     bfs();
   } else if (algo == "Dijkstra") {
     solving = true;
+    solving = true;
+    open_set = [];
+    open_set.push(starting_cell);
     dijkstra();
   } else {
     console.error("no algo selected");
@@ -425,7 +428,36 @@ function bfs() {
   }
 }
 
-function dijkstra() {}
+function dijkstra() {
+  if (open_set.length > 0) {
+    let current = open_set.shift();
+    current.make_visited();
+    current.draw();
+    for (i = 0; i < current.neighbors.length; i++) {
+      let neighbor = current.neighbors[i];
+      if (!neighbor.was_visited()) {
+        neighbor.previous = current;
+        if (neighbor == ending_cell) {
+          solving = false;
+          return reconstruct_path(ending_cell);
+        }
+        neighbor.make_open();
+        neighbor.draw();
+
+        let temp_set = new Set(open_set);
+        temp_set.add(neighbor);
+        open_set = [...temp_set];
+      }
+    }
+
+    setTimeout(() => {
+      dijkstra();
+    }, 50);
+  } else {
+    console.log("no path available");
+    solving = false;
+  }
+}
 
 function reconstruct_path(temp) {
   if (temp.previous) {
