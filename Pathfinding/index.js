@@ -28,7 +28,7 @@ canvas.height = num_of_rows * (cell_size + cell_gap) - cell_gap;
 canvas.width = num_of_cols * (cell_size + cell_gap) - cell_gap;
 
 // Drawing event listeners
-canvas.addEventListener("mousedown", (m) => {
+canvas.addEventListener("mousedown", () => {
   drawing = true;
 });
 
@@ -40,7 +40,7 @@ canvas.addEventListener("mousemove", (m) => {
   }
 });
 
-canvas.addEventListener("mouseup", (m) => {
+canvas.addEventListener("mouseup", () => {
   drawing = false;
 });
 
