@@ -12,8 +12,10 @@ var icicle_heights;
 var icicle_width = 40;
 var icicle_gap = 10;
 var num_of_icicles = Math.floor(canvas.width / (icicle_gap + icicle_width));
-var algo = "bubble";
+var algo = "insertion";
 var is_sorted = false;
+var bubble_counter;
+var insertion_counter;
 
 const backgroundGradient = c.createLinearGradient(0, 0, 0, canvas.height);
 backgroundGradient.addColorStop(0, "#3700b3");
@@ -68,25 +70,46 @@ function randomIntFromRange(min, max) {
 
 function sort() {
   if (algo == "bubble") {
+    bubble_counter = 0;
     bubble_sort();
+  } else if (algo == "insertion") {
+    insertion_counter = 0;
+    insertion_sort();
   }
 }
 
 function bubble_sort() {
-  let counter = 0;
-  while (!is_sorted) {
+  if (!is_sorted) {
     is_sorted = true;
-    for (i = 0; i < icicles.length - 1 - counter; i++) {
+    for (i = 0; i < icicles.length - 1 - bubble_counter; i++) {
       if (icicles[i].height > icicles[i + 1].height) {
-        let temp = icicles[i].height;
-        icicles[i].height = icicles[i + 1].height;
-        icicles[i + 1].height = temp;
+        swap_icicles_by_index(i, i + 1);
         is_sorted = false;
       }
     }
-    counter += 1;
+    update_screen();
+    bubble_counter += 1;
+    setTimeout(bubble_sort, 250);
   }
-  update_screen();
+}
+
+function insertion_sort() {
+  if (insertion_counter < icicles.length) {
+    let j = insertion_counter;
+    while (j > 0 && icicles[j].height < icicles[j - 1].height) {
+      swap_icicles_by_index(j, j - 1);
+      j -= 1;
+    }
+    insertion_counter++;
+    update_screen();
+    setTimeout(insertion_sort, 250);
+  }
+}
+
+function swap_icicles_by_index(i, j) {
+  let temp = icicles[i].height;
+  icicles[i].height = icicles[j].height;
+  icicles[j].height = temp;
 }
 
 generate_icicles();
