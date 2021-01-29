@@ -7,6 +7,38 @@
     <link rel="stylesheet" href="./sorting.css" />
   </head>
   <body>
+    <section id="guide" class="guide">
+      <h2>Pathfinding Visualizer</h2>
+      <div class="guide_buttons">
+        <div class="step_1">
+          <h3>Step 1: Add a Start and Finish</h3>
+          <button id="start" class="guide_button">Start</button>
+          <button id="end" class="guide_button">Finish</button>
+        </div>
+        <div class="step_2">
+          <h3>Step 2: Add Walls</h3>
+          <button id="barrier" class="guide_button">Wall</button>
+          <button id="random-barriers" class="guide_button">Throw Walls</button>
+        </div>
+        <div class="step_3">
+          <h3>Step 3: Choose an Algorithm</h3>
+          <div class="dropdown">
+            <button id="algos" class="dropbtn">Choose Algorithm</button>
+            <div id="myDropdown" class="dropdown-content">
+              <button id="A*" class="">A*</button>
+              <button id="BFS">Breadth First Search</button>
+              <button id="Dijkstra">Dijkstra's</button>
+            </div>
+          </div>
+          <button id="solve" class="guide_button">Solve</button>
+        </div>
+        <div class="step_4">
+          <h3>Additional tools</h3>
+          <button id="reset_cell" class="guide_button">Eraser</button>
+          <button id="clear" class="guide_button">New Grid</button>
+        </div>
+      </div>
+    </section>
     <section class="buttons">
       <button id="solve" class="btn">Solve</button>
     </section>
