@@ -1,4 +1,49 @@
+document.getElementById("new").addEventListener("click", new_icicles);
+
 document.getElementById("solve").addEventListener("click", sort);
+
+/* When the user clicks on the button, 
+toggle between hiding and showing the dropdown content */
+document.getElementById("algos").addEventListener("click", show_algos);
+
+function show_algos() {
+  document.getElementById("myDropdown").classList.toggle("show");
+}
+
+// Close the dropdown if the user clicks outside of it
+window.onclick = function (event) {
+  if (!event.target.matches(".dropbtn")) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains("show")) {
+        openDropdown.classList.remove("show");
+      }
+    }
+  }
+};
+
+// Dropdown Buttons
+document.getElementById("bubble").addEventListener("click", change_to_bubble);
+function change_to_bubble() {
+  document.getElementById("algos").textContent = "Bubble Sort";
+  algo = "bubble";
+}
+
+document
+  .getElementById("insertion")
+  .addEventListener("click", change_to_insertion);
+function change_to_insertion() {
+  document.getElementById("algos").textContent = "Insertion Sort";
+  algo = "insertion";
+}
+
+document.getElementById("select").addEventListener("click", change_to_select);
+function change_to_select() {
+  document.getElementById("algos").textContent = "Selection Sort";
+  algo = "select";
+}
 
 const canvas = document.querySelector("canvas");
 const c = canvas.getContext("2d");
@@ -12,10 +57,12 @@ var icicle_heights;
 var icicle_width = 40;
 var icicle_gap = 10;
 var num_of_icicles = Math.floor(canvas.width / (icicle_gap + icicle_width));
-var algo = "insertion";
+var algo;
+var sorting = false;
 var is_sorted = false;
 var bubble_counter;
 var insertion_counter;
+var selection_index;
 
 const backgroundGradient = c.createLinearGradient(0, 0, 0, canvas.height);
 backgroundGradient.addColorStop(0, "#3700b3");
@@ -64,17 +111,33 @@ function update_screen() {
   }
 }
 
+function new_icicles() {
+  generate_icicles();
+  update_screen();
+  sorting = false;
+}
+
 function randomIntFromRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 function sort() {
-  if (algo == "bubble") {
-    bubble_counter = 0;
-    bubble_sort();
-  } else if (algo == "insertion") {
-    insertion_counter = 0;
-    insertion_sort();
+  if (!sorting) {
+    if (algo == "bubble") {
+      sorting = true;
+      bubble_counter = 0;
+      bubble_sort();
+    } else if (algo == "insertion") {
+      sorting = true;
+      insertion_counter = 0;
+      insertion_sort();
+    } else if (algo == "select") {
+      sorting = true;
+      selection_index = 0;
+      selection_sort();
+    } else {
+      alert("Please Select an Algorithm");
+    }
   }
 }
 
@@ -103,6 +166,21 @@ function insertion_sort() {
     insertion_counter++;
     update_screen();
     setTimeout(insertion_sort, 250);
+  }
+}
+
+function selection_sort() {
+  if (selection_index < icicles.length - 1) {
+    let smallest_index = selection_index;
+    for (i = selection_index + 1; i < icicles.length; i++) {
+      if (icicles[smallest_index].height > icicles[i].height) {
+        smallest_index = i;
+      }
+    }
+    swap_icicles_by_index(selection_index, smallest_index);
+    selection_index += 1;
+    update_screen();
+    setTimeout(selection_sort, 250);
   }
 }
 
